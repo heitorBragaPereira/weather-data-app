@@ -7,7 +7,7 @@ export default function Header() {
     <View style={styles.box}>
       <Text style={styles.title}>ClimaHub</Text>
       <IconButton
-        icon={(props) => <Bolt {...props} color="#ffffff" />}
+        icon={(props) => <Bolt {...props} color="#1d1d1d" />}
         size={20}
         style={styles.iconButton}
         onPress={() => console.log("Pressed")}
@@ -17,20 +17,24 @@ export default function Header() {
 }
 const styles = StyleSheet.create({
   box: {
+    position: "relative",
     width: "100%",
+    height: 120,
     display: "flex",
     flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 15,
+    justifyContent: "center",
+    alignItems: "flex-end",
+    paddingVertical: 25,
   },
   title: {
     fontSize: 18,
     fontWeight: 600,
-    color: "#FFF",
+    color: "#1d1d1d",
   },
   iconButton: {
-    backgroundColor: "#1d1c1a",
+    position: "absolute",
+    bottom: 12,
+    right: 10,
     borderRadius: 50,
   },
 });

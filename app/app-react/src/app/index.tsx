@@ -1,22 +1,26 @@
 import { StatusBar, StyleSheet, View } from "react-native";
+import { PaperProvider } from "react-native-paper";
 import Home from "../pages/home/Home";
+import { theme } from "./theme";
 
 export default function Index() {
   return (
-    <View style={styles.header}>
-      <StatusBar
-        barStyle={"light-content"}
-        backgroundColor={"transparent"}
-        translucent
-      />
-      <Home />
-    </View>
+    <PaperProvider theme={theme}>
+      <View style={styles.header}>
+        <StatusBar
+          barStyle={"dark-content"}
+          backgroundColor={"transparent"}
+          translucent
+        />
+        <Home />
+      </View>
+    </PaperProvider>
   );
 }
 
 const styles = StyleSheet.create({
   header: {
     height: "100%",
-    backgroundColor: "#22211f",
+    backgroundColor: theme.colors.secondary,
   },
 });

@@ -1,6 +1,6 @@
 import { useAppTheme } from "@/src/hooks/useTheme";
 import { Text, View } from "react-native";
-import Wifi from "../../assets/home/wifi.svg";
+import Wifi from "../../assets/wifi.svg";
 import Header from "../home/components/Header";
 import FormNetwork from "./components/formNetwork/FormNetwork";
 import { createStyles } from "./styles";

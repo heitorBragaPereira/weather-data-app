@@ -1,15 +1,14 @@
 import { Bolt } from "lucide-react-native";
-import React, { StyleSheet, Text, View } from "react-native";
-import { IconButton } from "react-native-paper";
+import React, { Image, StyleSheet, View } from "react-native";
+import { Appbar, IconButton } from "react-native-paper";
 
 export default function Header() {
   return (
     <View style={styles.box}>
-      <Text style={styles.title}>ClimaHub</Text>
+      <Appbar.BackAction onPress={() => {}} />
+      <Image source={require("@/src/assets/logo.png")} style={styles.logo} />
       <IconButton
         icon={(props) => <Bolt {...props} color="#1d1d1d" />}
-        size={20}
-        style={styles.iconButton}
         onPress={() => console.log("Pressed")}
       />
     </View>
@@ -17,24 +16,17 @@ export default function Header() {
 }
 const styles = StyleSheet.create({
   box: {
-    position: "relative",
     width: "100%",
-    height: 120,
     display: "flex",
     flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "flex-end",
-    paddingVertical: 25,
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 50,
   },
-  title: {
-    fontSize: 18,
-    fontWeight: 600,
-    color: "#1d1d1d",
-  },
-  iconButton: {
-    position: "absolute",
-    bottom: 12,
-    right: 10,
-    borderRadius: 50,
+  logo: {
+    width: 150,
+    height: 50,
+    resizeMode: "contain",
+    marginVertical: 10,
   },
 });

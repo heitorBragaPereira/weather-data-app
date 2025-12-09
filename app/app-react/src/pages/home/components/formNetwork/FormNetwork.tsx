@@ -7,15 +7,19 @@ import { useForm, Controller } from "react-hook-form";
 import { formNetwork, FormNetwork } from "./formNetworkSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-interface Form {
-  onSubmit: () => void;
-}
+// interface Form {
+//   onSubmit: () => void;
+// }
 
-export default function FormNetworkComponent({ onSubmit }: Form) {
+export default function FormNetworkComponent() {
   const theme = useAppTheme();
   const { control, handleSubmit } = useForm<FormNetwork>({
     resolver: zodResolver(formNetwork),
   });
+
+  const onSubmit = () => {
+    console.log("Implementar ");
+  };
   return (
     <View style={styles.form}>
       <Controller

@@ -17,8 +17,8 @@ export const theme: AppTheme = {
   roundness: 5,
   colors: {
     ...DefaultTheme.colors,
-    primary: "#2fb65cff",
-    secondary: "#f1f1f1ff",
+    primary: "#ff8d3cff",
+    secondary: "#f8f8f8ff",
     textDarkPrimary: "#162e1aff",
     textDarkSecondary: "#797979ff",
 

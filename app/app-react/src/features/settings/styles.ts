@@ -7,7 +7,7 @@ export const createStyles = (theme: AppTheme) =>
     body: {
       width: "100%",
       height: "100%",
-      backgroundColor: theme.colors.primary,
+      backgroundColor: theme.colors.secondary,
       // borderTopRightRadius: 35,
       // borderTopLeftRadius: 35,
       padding: 20,
@@ -29,7 +29,7 @@ export const createStyles = (theme: AppTheme) =>
     title: {
       fontSize: 20,
       fontWeight: 300,
-      color: theme.colors.textLight,
+      color: theme.colors.textDark,
       marginVertical: 15,
     },
   });

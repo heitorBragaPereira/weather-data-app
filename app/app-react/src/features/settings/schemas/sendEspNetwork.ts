@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const formNetwork = z.object({
-  network: z
+  ssid: z
     .string({ message: "Campo obrigatório" })
     .min(6, "O campo deve ter no mínimo 6 caracteres"),
   password: z

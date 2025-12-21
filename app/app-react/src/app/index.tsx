@@ -1,7 +1,7 @@
 import { StatusBar, StyleSheet, View } from "react-native";
 import { PaperProvider } from "react-native-paper";
-import Home from "../pages/home/Home";
 import { theme } from "./theme";
+import Settings from "../features/settings";
 
 export default function Index() {
   return (
@@ -12,7 +12,7 @@ export default function Index() {
           backgroundColor={"transparent"}
           translucent
         />
-        <Home />
+        <Settings />
       </View>
     </PaperProvider>
   );

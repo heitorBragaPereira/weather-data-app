@@ -7,13 +7,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import { StyleSheet, View } from "react-native";
 import { formNetwork, FormNetwork } from "../schemas/sendEspNetwork";
+import { theme } from "@/src/app/theme";
 
 // interface Form {
 //   onSubmit: () => void;
 // }
 
 export default function SendEspNetwork() {
-  const theme = useAppTheme();
+  // const theme = useAppTheme();
   const { registerDataNetwork } = useRegisterDataNetwork();
   const { control, handleSubmit } = useForm<FormNetwork>({
     resolver: zodResolver(formNetwork),

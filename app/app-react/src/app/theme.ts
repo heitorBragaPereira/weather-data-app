@@ -7,6 +7,8 @@ export type AppCustomColors = {
   textSelection: string;
   colorFocusOutlined: string;
   textDarkFaint: string;
+  iconLight: string;
+  light: string;
 };
 export interface AppTheme extends MD3Theme {
   myOwnProperty: boolean;
@@ -21,6 +23,7 @@ export const theme: AppTheme = {
     ...DefaultTheme.colors,
     primary: "#ff6d08",
     secondary: "#f3f3f3ff",
+    light: "#FFFF",
 
     // Inputs
     colorOutline: "#a7a7a7ff",
@@ -31,5 +34,8 @@ export const theme: AppTheme = {
     textDarkFaint: "#797979ff",
     textLight: "#FFFF",
     textSelection: "#2c2c2c3a",
+
+    // Icons
+    iconLight: "#3a3a3aff",
   },
 };

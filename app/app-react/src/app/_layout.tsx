@@ -1,7 +1,8 @@
-import { Stack, router } from "expo-router";
+import { Stack } from "expo-router";
 import { Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { theme } from "./theme";
+import { router } from "expo-router";
 
 export default function RootLayout() {
   return (
@@ -12,20 +13,29 @@ export default function RootLayout() {
         },
         headerTintColor: "#fff",
         headerTitleAlign: "center",
-
-        headerLeft: ({ canGoBack }) =>
-          canGoBack ? (
-            <Pressable onPress={() => router.back()}>
-              <Ionicons name="arrow-back" size={24} color="#fff" />
-            </Pressable>
-          ) : null,
-
-        headerRight: () => (
-          <Pressable onPress={() => router.push("/settings")}>
-            <Ionicons name="settings-outline" size={22} color="#fff" />
-          </Pressable>
-        ),
       }}
-    />
+    >
+      {/* Home sem header */}
+      <Stack.Screen
+        name="index"
+        options={{
+          headerShown: false,
+        }}
+      />
+
+      {/* Demais telas com header */}
+      <Stack.Screen
+        name="settings"
+        options={{
+          title: "Configurações",
+          headerLeft: ({ canGoBack }) =>
+            canGoBack ? (
+              <Pressable onPress={() => router.back()}>
+                <Ionicons name="arrow-back" size={24} color="#fff" />
+              </Pressable>
+            ) : null,
+        }}
+      />
+    </Stack>
   );
 }

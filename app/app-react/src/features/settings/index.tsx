@@ -5,9 +5,9 @@ import Header from "../../components/Header";
 import FormNetwork from "./components/SendEspNetwork";
 import { createStyles } from "./styles";
 import { Stack } from "expo-router";
+import { theme } from "@/src/app/theme";
 
 export default function Home() {
-  const theme = useAppTheme();
   const styles = createStyles(theme);
 
   return (

@@ -5,9 +5,10 @@ import { db } from "./db.js";
 export class MySQLReadingRepository implements IReadingRepository {
   async save(reading: Reading): Promise<void> {
     await db.query(
-      `INSERT INTO readings (temperature, humidity, pressure, ts)
-       VALUES (?, ?, ?, ?)`,
+      `INSERT INTO readings (device, temperature, humidity, pressure, ts)
+       VALUES (?, ?, ?, ?, ?)`,
       [
+        reading.device,
         reading.temperature,
         reading.humidity,
         reading.pressure,
@@ -23,7 +24,13 @@ export class MySQLReadingRepository implements IReadingRepository {
     const row = rows[0];
     if (!row) return null;
 
-    return new Reading(row.temperature, row.humidity, row.pressure, row.ts);
+    return new Reading(
+      row.device,
+      row.temperature,
+      row.humidity,
+      row.pressure,
+      row.ts
+    );
   }
 
   async getRecent(limit: number): Promise<Reading[]> {

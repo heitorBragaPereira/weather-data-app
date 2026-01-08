@@ -23,6 +23,7 @@ export const db = await mysql.createPool({
 await db.query(`
   CREATE TABLE IF NOT EXISTS readings (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    device VARCHAR(50) NOT NULL,
     temperature DOUBLE,
     humidity DOUBLE,
     pressure DOUBLE,

@@ -1,14 +1,59 @@
-import { Image, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useEffect, useState } from "react";
 import { theme } from "@/src/app/theme";
-import Logo from "@/src/assets/logo.svg";
 import Cloud from "@/src/assets/cloud.svg";
 import Humidity from "@/src/assets/humidity.svg";
+import Logo from "@/src/assets/logo.svg";
 import Pressao from "@/src/assets/pressao.svg";
-import { IconButton } from "react-native-paper";
-import { Bolt } from "lucide-react-native";
 import { router } from "expo-router";
+import { Bolt } from "lucide-react-native";
+import { StyleSheet, Text, View } from "react-native";
+import { IconButton } from "react-native-paper";
+import { useLiveReading } from "../hooks/useLiveReading";
+import moment from "moment";
+import "moment/locale/pt-br";
+
+interface DateTime {
+  time: string;
+  day: number;
+  month: string;
+  year: number;
+  weekday: number;
+}
+
+const weekDay = [
+  "Domingo",
+  "Segunda",
+  "Terça",
+  "Quarta",
+  "Quinta",
+  "Sexta",
+  "Sábado",
+];
 
 export default function Home() {
+  const { reading } = useLiveReading("esp32_01");
+  const [dateTime, setDateTime] = useState<DateTime | null>(null);
+  console.log(dateTime);
+  const handleChangeDateTime = () => {
+    setDateTime({
+      time: moment().format("HH:mm"),
+      day: Number(moment().format("DD")),
+      month: moment().format("MMMM"),
+      year: Number(moment().format("YYYY")),
+      weekday: moment().day(),
+    });
+  };
+  const humidityPercent =
+    reading?.humidity !== undefined
+      ? Math.min(Math.max(reading.humidity, 0), 100)
+      : 0;
+
+  useEffect(() => {
+    moment.locale("pt-br");
+    handleChangeDateTime();
+    const interval = setInterval(handleChangeDateTime, 1000);
+    return () => clearInterval(interval);
+  }, []);
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -21,14 +66,25 @@ export default function Home() {
       </View>
 
       <View style={styles.boxDateTime}>
-        <Text style={styles.titleTime}>16:45</Text>
-        <Text style={styles.subtitleTime}>Domingo, 21 de Dezembro de 2025</Text>
+        <Text style={styles.titleTime}>{dateTime?.time}</Text>
+        <Text style={styles.subtitleTime}>
+          {dateTime
+            ? `${weekDay[dateTime.weekday]}, ${dateTime.day} de ${
+                dateTime.month
+              } de ${dateTime.year}`
+            : "Sem informações de data"}
+        </Text>
       </View>
 
       <View style={styles.cardTemperature}>
         <Text style={styles.titleCardTemperature}>Temperatura ambiente</Text>
         <View style={styles.contentCardTempetrature}>
-          <Text style={styles.valueTemperature}>27°C</Text>
+          <Text style={styles.valueTemperature}>
+            {reading?.temperature
+              ? String(reading?.temperature.toFixed(1)).replace(".", ",")
+              : "0,0"}
+            °C
+          </Text>
           <Cloud width={60} height={60} />
         </View>
       </View>
@@ -39,9 +95,19 @@ export default function Home() {
             <Humidity width={30} height={30} />
           </View>
           <Text style={styles.textMiniCard}>Umidade ambiente</Text>
-          <Text style={[styles.valueMiniCard, { color: "#1860f9" }]}>62%</Text>
+          <Text style={[styles.valueMiniCard, { color: "#1860f9" }]}>
+            {reading?.humidity
+              ? String(reading?.humidity?.toFixed(1))?.replace(".", ",")
+              : "0,0"}
+            %
+          </Text>
           <View style={styles.humidityChartInside}>
-            <View style={styles.humidityChartOutside}></View>
+            <View
+              style={[
+                styles.humidityChartOutside,
+                { width: `${humidityPercent}%` },
+              ]}
+            ></View>
           </View>
         </View>
         <View style={styles.miniCard}>
@@ -49,12 +115,18 @@ export default function Home() {
             <Pressao width={30} height={30} />
           </View>
           <Text style={styles.textMiniCard}>Pressão atmosférica</Text>
-          <Text style={[styles.valueMiniCard, { color: "#9e2af3" }]}>960</Text>
+          <Text style={[styles.valueMiniCard, { color: "#9e2af3" }]}>
+            {reading?.pressure
+              ? String(reading?.pressure?.toFixed(1)).replace(".", ",")
+              : "0,0"}
+          </Text>
           <Text style={{ color: theme.colors.textDarkFaint }}>hPa</Text>
         </View>
       </View>
       <View style={styles.footer}>
-        <Text style={styles.textFooter}>Última atualização: 16:45</Text>
+        <Text style={styles.textFooter}>
+          Última atualização: {moment(reading?.ts).format("DD/MM/YY HH:mm")}
+        </Text>
       </View>
     </View>
   );
@@ -153,7 +225,6 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 0,
     left: 0,
-    width: "62%",
     height: 10,
     backgroundColor: "#1860f9",
     borderRadius: 10,

@@ -12,7 +12,7 @@ export function useRegisterDataNetwork() {
     try {
       const data: DataNetworkEsp = {
         ...vaultItem,
-        mqtt_host: "192.168.4.3",
+        mqtt_host: "192.168.3.18",
         mqtt_port: 1883,
       };
       await registerNetwork(data);

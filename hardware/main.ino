@@ -2,12 +2,29 @@
 #include <WebServer.h>
 #include <Preferences.h>
 #include <ArduinoJson.h>
+#include <Wire.h>
+#include <Adafruit_Sensor.h>
+#include <Adafruit_BME280.h>
+#include <PubSubClient.h>
+
+#define MQTT_TOPIC "weather/esp32_01/data"
 
 Preferences prefs;
 WebServer server(80);
+WiFiClient espClient;
+PubSubClient mqttClient(espClient);
+Adafruit_BME280 bme;
 
 // -------------------------------------------------------------
-// Tenta conectar com a rede salva no Preferences
+// Variáveis globais
+// -------------------------------------------------------------
+String mqttHost;
+int mqttPort;
+unsigned long lastPublish = 0;
+const unsigned long publishInterval = 5000; // 5s
+
+// -------------------------------------------------------------
+// WiFi
 // -------------------------------------------------------------
 bool connectToSavedWiFi() {
   prefs.begin("wifi", true);
@@ -15,46 +32,42 @@ bool connectToSavedWiFi() {
   String pass = prefs.getString("pass", "");
   prefs.end();
 
-  if (ssid.length() == 0) {
-    Serial.println("Nenhuma rede salva.");
-    return false;
-  }
+  if (ssid.isEmpty()) return false;
 
-  Serial.printf("Conectando a %s...\n", ssid.c_str());
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid.c_str(), pass.c_str());
 
   unsigned long start = millis();
   while (WiFi.status() != WL_CONNECTED && millis() - start < 8000) {
     delay(200);
-    Serial.print(".");
   }
 
-  if (WiFi.status() == WL_CONNECTED) {
-    Serial.println("\nConectado!");
-    Serial.println(WiFi.localIP());
-    return true;
-  }
-
-  Serial.println("\nFalha ao conectar.");
-  return false;
+  return WiFi.status() == WL_CONNECTED;
 }
 
+// -------------------------------------------------------------
+// MQTT
+// -------------------------------------------------------------
+void connectMQTT() {
+  if (mqttClient.connected()) return;
+
+  while (!mqttClient.connected()) {
+    String clientId = "ESP32-" + String(random(0xffff), HEX);
+    if (mqttClient.connect(clientId.c_str())) {
+      Serial.println("MQTT conectado");
+    } else {
+      Serial.println("Falha MQTT, tentando novamente...");
+      delay(2000);
+    }
+  }
+}
 
 // -------------------------------------------------------------
-// Endpoint POST /config  (recebe SSID, senha e MQTT)
+// HTTP CONFIG
 // -------------------------------------------------------------
 void handleConfig() {
-  if (!server.hasArg("plain")) {
-    server.send(400, "application/json", "{\"error\":\"expected JSON\"}");
-    return;
-  }
-
   StaticJsonDocument<256> doc;
-  if (deserializeJson(doc, server.arg("plain"))) {
-    server.send(400, "application/json", "{\"error\":\"invalid JSON\"}");
-    return;
-  }
+  deserializeJson(doc, server.arg("plain"));
 
   prefs.begin("wifi", false);
   prefs.putString("ssid", doc["ssid"].as<const char*>());
@@ -64,110 +77,71 @@ void handleConfig() {
   prefs.end();
 
   server.send(200, "application/json", "{\"status\":\"saved\"}");
-
   delay(1000);
   ESP.restart();
 }
 
-
-// -------------------------------------------------------------
-// Lista redes Wi-Fi disponíveis
-// -------------------------------------------------------------
-void handleWifiList() {
-  Serial.println("Buscando WiFi...");
-  int n = WiFi.scanNetworks();
-
-  StaticJsonDocument<512> doc;
-  JsonArray arr = doc.to<JsonArray>();
-
-  for (int i = 0; i < n; i++) {
-    JsonObject obj = arr.add<JsonObject>();
-    obj["ssid"] = WiFi.SSID(i);
-    obj["rssi"] = WiFi.RSSI(i);
-  }
-
-  String json;
-  serializeJson(arr, json);
-  server.send(200, "application/json", json);
-}
-
-
-// -------------------------------------------------------------
-// Status da conexão
-// -------------------------------------------------------------
 void handleStatus() {
   StaticJsonDocument<128> doc;
-
-  if (WiFi.status() == WL_CONNECTED) {
-    doc["connected"] = true;
-    doc["ip"] = WiFi.localIP().toString();
-  } else {
-    doc["connected"] = false;
-  }
+  doc["connected"] = WiFi.status() == WL_CONNECTED;
+  doc["ip"] = WiFi.localIP().toString();
 
   String out;
   serializeJson(doc, out);
   server.send(200, "application/json", out);
 }
 
-
-// -------------------------------------------------------------
-// Inicia Access Point + servidor HTTP
-// -------------------------------------------------------------
-void startAPMode() {
-  Serial.println("Iniciando modo AP...");
-
-  WiFi.disconnect(true);
-  delay(300);
-
-  WiFi.mode(WIFI_AP);
-  bool ok = WiFi.softAP("Weather-Data", "pereira96");
-  if (!ok) {
-    Serial.println("Falha ao iniciar AP!");
-    return;
-  }
-
-  delay(500);
-
-  Serial.print("AP IP: ");
-  Serial.println(WiFi.softAPIP());
-
-  // Registrar rotas
-  server.on("/wifi-list", HTTP_GET, handleWifiList);
-  server.on("/status", HTTP_GET, handleStatus);
-  server.on("/config", HTTP_POST, handleConfig);
-
-  server.begin();
-  Serial.println("Servidor HTTP iniciado em modo AP!");
-}
-
-
 // -------------------------------------------------------------
 // Setup
 // -------------------------------------------------------------
 void setup() {
   Serial.begin(115200);
-  delay(1500);
 
-  Serial.println("Inicializando...");
+  if (!connectToSavedWiFi()) return;
 
-  // Se não conseguir conectar, inicia AP
-  if (!connectToSavedWiFi()) {
-    startAPMode();
-  } else {
-    // Conectou! Mesmo assim, pode querer permitir endpoints
-    server.on("/wifi-list", HTTP_GET, handleWifiList);
-    server.on("/status", HTTP_GET, handleStatus);
-    server.on("/config", HTTP_POST, handleConfig);
-    server.begin();
+  prefs.begin("wifi", true);
+  mqttHost = prefs.getString("mqtt_host", "");
+  mqttPort = prefs.getInt("mqtt_port", 1883);
+  prefs.end();
+
+  mqttClient.setServer(mqttHost.c_str(), mqttPort);
+
+  if (!bme.begin(0x76)) {
+    Serial.println("Erro ao iniciar BME280");
+    while (1);
   }
+
+  server.on("/config", HTTP_POST, handleConfig);
+  server.on("/status", HTTP_GET, handleStatus);
+  server.begin();
+
+  Serial.println("Sistema pronto");
 }
 
-
 // -------------------------------------------------------------
-// Loop do servidor
+// Loop
 // -------------------------------------------------------------
 void loop() {
   server.handleClient();
-  delay(2);
+
+  if (WiFi.status() != WL_CONNECTED) return;
+
+  connectMQTT();
+  mqttClient.loop();
+
+  if (millis() - lastPublish > publishInterval) {
+    lastPublish = millis();
+
+    StaticJsonDocument<256> doc;
+    doc["device"] = "esp32_heitor";
+    doc["temperature"] = bme.readTemperature();
+    doc["humidity"] = bme.readHumidity();
+    doc["pressure"] = bme.readPressure() / 100.0F;
+
+    String payload;
+    serializeJson(doc, payload);
+
+    mqttClient.publish(MQTT_TOPIC, payload.c_str());
+    Serial.println(payload);
+  }
 }

@@ -9,7 +9,6 @@ app.use("/", router);
 
 const server = http.createServer(app);
 
-// 🔥 WebSocket acoplado ao HTTP
 export const wsServer = new WSServer(server);
 
 export default server;

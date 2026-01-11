@@ -31,9 +31,8 @@ const weekDay = [
 ];
 
 export default function Home() {
-  const { reading } = useLiveReading("esp32_01");
+  const { reading } = useLiveReading("esp32_heitor");
   const [dateTime, setDateTime] = useState<DateTime | null>(null);
-  console.log(dateTime);
   const handleChangeDateTime = () => {
     setDateTime({
       time: moment().format("HH:mm"),

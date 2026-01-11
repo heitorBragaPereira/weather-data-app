@@ -7,7 +7,7 @@
 #include <Adafruit_BME280.h>
 #include <PubSubClient.h>
 
-#define MQTT_TOPIC "weather/esp32_01/data"
+#define MQTT_TOPIC "weather/esp32_heitor/data"
 
 Preferences prefs;
 WebServer server(80);
@@ -15,17 +15,11 @@ WiFiClient espClient;
 PubSubClient mqttClient(espClient);
 Adafruit_BME280 bme;
 
-// -------------------------------------------------------------
-// Variáveis globais
-// -------------------------------------------------------------
 String mqttHost;
 int mqttPort;
 unsigned long lastPublish = 0;
-const unsigned long publishInterval = 5000; // 5s
+const unsigned long publishInterval = 60000;
 
-// -------------------------------------------------------------
-// WiFi
-// -------------------------------------------------------------
 bool connectToSavedWiFi() {
   prefs.begin("wifi", true);
   String ssid = prefs.getString("ssid", "");
@@ -45,9 +39,6 @@ bool connectToSavedWiFi() {
   return WiFi.status() == WL_CONNECTED;
 }
 
-// -------------------------------------------------------------
-// MQTT
-// -------------------------------------------------------------
 void connectMQTT() {
   if (mqttClient.connected()) return;
 
@@ -62,9 +53,6 @@ void connectMQTT() {
   }
 }
 
-// -------------------------------------------------------------
-// HTTP CONFIG
-// -------------------------------------------------------------
 void handleConfig() {
   StaticJsonDocument<256> doc;
   deserializeJson(doc, server.arg("plain"));
@@ -91,13 +79,27 @@ void handleStatus() {
   server.send(200, "application/json", out);
 }
 
-// -------------------------------------------------------------
-// Setup
-// -------------------------------------------------------------
+void startAPMode() {
+  Serial.println("Modo AP iniciado");
+
+  WiFi.mode(WIFI_AP);
+  WiFi.softAP("climahub", "clima2025");
+
+  Serial.print("IP AP: ");
+  Serial.println(WiFi.softAPIP());
+
+  server.on("/config", HTTP_POST, handleConfig);
+  server.on("/status", HTTP_GET, handleStatus);
+  server.begin();
+}
+
 void setup() {
   Serial.begin(115200);
 
-  if (!connectToSavedWiFi()) return;
+ if (!connectToSavedWiFi()) {
+  startAPMode();
+  return;
+}
 
   prefs.begin("wifi", true);
   mqttHost = prefs.getString("mqtt_host", "");
@@ -118,9 +120,6 @@ void setup() {
   Serial.println("Sistema pronto");
 }
 
-// -------------------------------------------------------------
-// Loop
-// -------------------------------------------------------------
 void loop() {
   server.handleClient();
 
